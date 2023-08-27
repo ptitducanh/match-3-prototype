@@ -31,7 +31,7 @@ PrefabInstance:
     - target: {fileID: 7667143225876670874, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}
       propertyPath: m_Name
-      value: Gem - Green Variant
+      value: Gem - Green
       objectReference: {fileID: 0}
     - target: {fileID: 7667143225876670884, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}
@@ -41,12 +41,17 @@ PrefabInstance:
         type: 3}
     - target: {fileID: 7667143225876670884, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}
+      propertyPath: m_SortingLayer
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7667143225876670884, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
+        type: 3}
       propertyPath: m_SortingLayerID
       value: -1529445301
       objectReference: {fileID: 0}
     - target: {fileID: 7667143225876670884, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}
-      propertyPath: m_SortingLayer
+      propertyPath: m_MaskInteraction
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7667143225876670885, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
@@ -56,14 +61,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7667143225876670885, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}
+      propertyPath: blastSize
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7667143225876670885, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
+        type: 3}
       propertyPath: destroyEffect
       value: 
       objectReference: {fileID: 4157327684024108653, guid: e5bba4196a7d43441bf62bd125171449,
         type: 3}
-    - target: {fileID: 7667143225876670885, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
+    - target: {fileID: 7667143225876670887, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}
-      propertyPath: blastSize
-      value: 1
+      propertyPath: m_RootOrder
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7667143225876670887, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}
@@ -82,6 +92,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7667143225876670887, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7667143225876670887, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
+        type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -93,16 +108,6 @@ PrefabInstance:
     - target: {fileID: 7667143225876670887, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7667143225876670887, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7667143225876670887, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
-        type: 3}
-      propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7667143225876670887, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,

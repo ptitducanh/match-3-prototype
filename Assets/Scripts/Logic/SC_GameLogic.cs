@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Scripts.Common;
 using TMPro;
 using UnityEngine;
@@ -17,7 +18,6 @@ public class SC_GameLogic : MonoBehaviour
     private void Start()
     {
         Init();
-        StartGame();
     }
 
     #endregion
@@ -48,7 +48,7 @@ public class SC_GameLogic : MonoBehaviour
                 int _gemToUse = Random.Range(0, SC_GameVariables.Instance.gems.Length);
 
                 int iterations = 0;
-                while (gameBoard.MatchesAt(new Vector2Int(x, y), SC_GameVariables.Instance.gems[_gemToUse]) && iterations < 100)
+                while (gameBoard.MatchesAt(new Vector2Int(x, y), (int)SC_GameVariables.Instance.gems[_gemToUse].type) && iterations < 100)
                 {
                     _gemToUse = Random.Range(0, SC_GameVariables.Instance.gems.Length);
                     iterations++;
@@ -57,96 +57,124 @@ public class SC_GameLogic : MonoBehaviour
             }
     }
     
-    public void StartGame()
-    {
-        //TODO: Start the game. 
-    }
     private void SpawnGem(Vector2Int _Position, SC_Gem _GemToSpawn, float delayFallingTime = 0)
     {
         if (Random.Range(0, 100f) < SC_GameVariables.Instance.bombChance)
             _GemToSpawn = SC_GameVariables.Instance.bomb;
 
+        // Get the gem from the pool. And put it into the gem holder
         SC_Gem _gem = ObjectPool.Instance.Get(_GemToSpawn.name).GetComponent<SC_Gem>();
         var gemTransform = _gem.transform;
         gemTransform.position = new Vector3(_Position.x, _Position.y + SC_GameVariables.Instance.dropHeight, 0f);
         gemTransform.SetParent(unityObjects["GemsHolder"].transform);
+        
+        // add the gem into game board logically
         gameBoard.SetGem(_Position.x,_Position.y, _gem);
         _gem.SetupGem(this,_Position);
         _gem.delayFallingTime = delayFallingTime;
     }
-    public void SetGem(int _X,int _Y, SC_Gem _Gem)
+    public void SetGem(int x,int y, SC_Gem gem)
     {
-        gameBoard.SetGem(_X,_Y, _Gem);
+        gameBoard.SetGem(x,y, gem);
     }
-    public SC_Gem GetGem(int _X, int _Y)
+    
+    public SC_Gem GetGem(int x, int y)
     {
-        return gameBoard.GetGem(_X, _Y);
+        return gameBoard.GetGem(x, y);
     }
-    public void SetState(GlobalEnums.GameState _CurrentState)
+    
+    public void SetState(GlobalEnums.GameState currentState)
     {
-        currentState = _CurrentState;
+        this.currentState = currentState;
     }
+    
     public void DestroyMatches()
     {
-        for (int i = 0; i < gameBoard.CurrentMatches.Count; i++)
-            if (gameBoard.CurrentMatches[i] != null)
-            {
-                ScoreCheck(gameBoard.CurrentMatches[i]);
-                DestroyMatchedGemsAt(gameBoard.CurrentMatches[i].posIndex);
-            }
+        var currentMatches = gameBoard.CurrentMatches;
+
+        foreach (var gem in currentMatches)
+        {
+            if(gem == null) continue;
+            
+            CalculateGameScore(gem);
+            DestroyMatchedGemsAt(gem.posIndex);
+        }
 
         StartCoroutine(DecreaseRowCo());
     }
+    
+    /// <summary>
+    /// Move all the gem down to the lowest position
+    /// </summary>
+    /// <returns></returns>
     private IEnumerator DecreaseRowCo()
     {
         yield return new WaitForSeconds(.2f);
 
         int nullCounter = 0;
+        int deepestRow = -1;
+        float delayToRefill = 0;
         for (int x = 0; x < gameBoard.Width; x++)
         {
             for (int y = 0; y < gameBoard.Height; y++)
             {
-                SC_Gem _curGem = gameBoard.GetGem(x, y);
-                if (_curGem == null)
+                SC_Gem curGem = gameBoard.GetGem(x, y);
+                if (curGem == null)
                 {
                     nullCounter++;
+                    if (deepestRow < 0)
+                        deepestRow = y;
                 }
                 else if (nullCounter > 0)
                 {
-                    _curGem.posIndex.y -= nullCounter;
-                    SetGem(x, y - nullCounter, _curGem);
+                    curGem.posIndex.y       -= nullCounter;
+                    curGem.delayFallingTime =  (curGem.posIndex.y - deepestRow) * 0.1f;
+                    delayToRefill           =  Mathf.Max(delayToRefill, curGem.delayFallingTime);
+                    SetGem(x, y - nullCounter, curGem);
                     SetGem(x, y, null);
                 }
             }
             nullCounter = 0;
         }
 
-        StartCoroutine(FilledBoardCo());
+        Debug.Log($"Delay to refill: {delayToRefill}");
+        StartCoroutine(FilledBoardCo(delayToRefill * 2));
     }
 
-    public void ScoreCheck(SC_Gem gemToCheck)
+    /// <summary>
+    /// Calculate the score of the game. Depends on which gem is matched.
+    /// </summary>
+    /// <param name="gemToCheck"></param>
+    private void CalculateGameScore(SC_Gem gemToCheck)
     {
         SC_GameVariables.Instance.Score += gemToCheck.scoreValue;
         EventHub.Instance.Publish("ScoreChanged");
     }
+    
     private void DestroyMatchedGemsAt(Vector2Int _Pos)
     {
         SC_Gem _curGem = gameBoard.GetGem(_Pos.x,_Pos.y);
         if (_curGem != null)
         {
-            Instantiate(_curGem.destroyEffect, new Vector2(_Pos.x, _Pos.y), Quaternion.identity);
-
-            Destroy(_curGem.gameObject);
+            var effect = ObjectPool.Instance.Get(_curGem.destroyEffect.name);
+            effect.transform.position = new Vector3(_Pos.x, _Pos.y, 0f);
+            
+            ObjectPool.Instance.Return(_curGem.gameObject);
             SetGem(_Pos.x,_Pos.y, null);
         }
     }
 
-    private IEnumerator FilledBoardCo()
+    /// <summary>
+    /// Refill the game board. Also destroy all the new matches if there's any.
+    /// </summary>
+    /// <param name="delayToRefill"></param>
+    /// <returns></returns>
+    private IEnumerator FilledBoardCo(float delayToRefill)
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(delayToRefill);
         RefillBoard();
         yield return new WaitForSeconds(0.5f);
-        gameBoard.FindAllMatches();
+        FindAllMatches();
         if (gameBoard.CurrentMatches.Count > 0)
         {
             yield return new WaitForSeconds(0.5f);
@@ -158,8 +186,13 @@ public class SC_GameLogic : MonoBehaviour
             currentState = GlobalEnums.GameState.move;
         }
     }
+    
+    /// <summary>
+    /// Refill the game board with new gems. Just that.
+    /// </summary>
     private void RefillBoard()
     {
+        var newBoard   = gameBoard.RefillGameBoard();
         var deepestRow = -1;
         for (int x = 0; x < gameBoard.Width; x++)
         {
@@ -172,31 +205,12 @@ public class SC_GameLogic : MonoBehaviour
                     {
                         deepestRow = y;
                     }
-                    
-                    int gemToUse = Random.Range(0, SC_GameVariables.Instance.gems.Length);
-                    SpawnGem(new Vector2Int(x, y), SC_GameVariables.Instance.gems[gemToUse], (y - deepestRow) * 0.1f);
+                    SpawnGem(new Vector2Int(x, y), SC_GameVariables.Instance.gemsDictionary[(GlobalEnums.GemType)newBoard[x, y]], (y - deepestRow) * 0.1f);
                 }
             }
         }
-        CheckMisplacedGems();
     }
-    private void CheckMisplacedGems()
-    {
-        List<SC_Gem> foundGems = new List<SC_Gem>();
-        foundGems.AddRange(FindObjectsOfType<SC_Gem>());
-        for (int x = 0; x < gameBoard.Width; x++)
-        {
-            for (int y = 0; y < gameBoard.Height; y++)
-            {
-                SC_Gem _curGem = gameBoard.GetGem(x, y);
-                if (foundGems.Contains(_curGem))
-                    foundGems.Remove(_curGem);
-            }
-        }
-
-        foreach (SC_Gem g in foundGems)
-            ObjectPool.Instance.Return(g.gameObject);
-    }
+    
     public void FindAllMatches()
     {
         gameBoard.FindAllMatches();

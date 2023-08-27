@@ -25,6 +25,13 @@ public class SC_Gem : MonoBehaviour
 
     public  int          blastSize = 1;
     private SC_GameLogic _scGameLogic;
+    private float        _currentVelocity;
+    private Transform    _transform;
+
+    private void Awake()
+    {
+        _transform = transform;
+    }
 
     void Update()
     {
@@ -35,21 +42,28 @@ public class SC_Gem : MonoBehaviour
         }
         // if the game isn't at the designed position, move it there
         if (Vector2.Distance(transform.position, posIndex) > 0.01f)
-            transform.position = Vector2.Lerp(transform.position, posIndex, SC_GameVariables.Instance.gemSpeed * Time.deltaTime);
+        {
+            var position  = _transform.position;
+            var direction = (posIndex - (Vector2)position).normalized;                   // get the direction
+            _currentVelocity    += SC_GameVariables.Instance.gemAcceleration * Time.deltaTime; // calculate the velocity base on the acceleration
+            position            += (Vector3)(direction * (_currentVelocity * Time.deltaTime)); // calculate the new position
+            _transform.position =  position;                                                   // set the new position
+        }
         else
         {
+            // reset the velocity if the gem is at the designed position
+            _currentVelocity = 0; 
             // if it is. Snap it to the exact position and update the game board
             transform.position = new Vector3(posIndex.x, posIndex.y, 0);
-            _scGameLogic.SetGem(posIndex.x, posIndex.y, this);
         }
     }
 
     #region public methods
 
-    public void SetupGem(SC_GameLogic _ScGameLogic, Vector2Int _Position)
+    public void SetupGem(SC_GameLogic scGameLogic, Vector2Int position)
     {
-        posIndex     = _Position;
-        _scGameLogic = _ScGameLogic;
+        posIndex     = position;
+        _scGameLogic = scGameLogic;
     }
 
     #endregion

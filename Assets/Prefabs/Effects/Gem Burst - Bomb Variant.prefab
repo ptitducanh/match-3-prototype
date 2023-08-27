@@ -9,6 +9,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 8242230760222407448, guid: d794be08823edd34da1790efd1739074,
         type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8242230760222407448, guid: d794be08823edd34da1790efd1739074,
+        type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -24,6 +29,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8242230760222407448, guid: d794be08823edd34da1790efd1739074,
         type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8242230760222407448, guid: d794be08823edd34da1790efd1739074,
+        type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -35,16 +45,6 @@ PrefabInstance:
     - target: {fileID: 8242230760222407448, guid: d794be08823edd34da1790efd1739074,
         type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8242230760222407448, guid: d794be08823edd34da1790efd1739074,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8242230760222407448, guid: d794be08823edd34da1790efd1739074,
-        type: 3}
-      propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8242230760222407448, guid: d794be08823edd34da1790efd1739074,
@@ -69,13 +69,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9206746479762182125, guid: d794be08823edd34da1790efd1739074,
         type: 3}
-      propertyPath: InitialModule.startColor.maxColor.r
-      value: 0.6226415
+      propertyPath: looping
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9206746479762182125, guid: d794be08823edd34da1790efd1739074,
         type: 3}
-      propertyPath: InitialModule.startColor.maxColor.g
-      value: 0.47444856
+      propertyPath: stopAction
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9206746479762182125, guid: d794be08823edd34da1790efd1739074,
+        type: 3}
+      propertyPath: ShapeModule.radius.value
+      value: 0.75
       objectReference: {fileID: 0}
     - target: {fileID: 9206746479762182125, guid: d794be08823edd34da1790efd1739074,
         type: 3}
@@ -84,13 +89,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9206746479762182125, guid: d794be08823edd34da1790efd1739074,
         type: 3}
-      propertyPath: InitialModule.startColor.minColor.r
-      value: 0.13376646
+      propertyPath: InitialModule.startColor.maxColor.g
+      value: 0.47444856
       objectReference: {fileID: 0}
     - target: {fileID: 9206746479762182125, guid: d794be08823edd34da1790efd1739074,
         type: 3}
-      propertyPath: InitialModule.startColor.minColor.g
-      value: 0.1458691
+      propertyPath: InitialModule.startColor.maxColor.r
+      value: 0.6226415
       objectReference: {fileID: 0}
     - target: {fileID: 9206746479762182125, guid: d794be08823edd34da1790efd1739074,
         type: 3}
@@ -99,18 +104,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9206746479762182125, guid: d794be08823edd34da1790efd1739074,
         type: 3}
+      propertyPath: InitialModule.startColor.minColor.g
+      value: 0.1458691
+      objectReference: {fileID: 0}
+    - target: {fileID: 9206746479762182125, guid: d794be08823edd34da1790efd1739074,
+        type: 3}
+      propertyPath: InitialModule.startColor.minColor.r
+      value: 0.13376646
+      objectReference: {fileID: 0}
+    - target: {fileID: 9206746479762182125, guid: d794be08823edd34da1790efd1739074,
+        type: 3}
       propertyPath: EmissionModule.m_Bursts.Array.data[0].countCurve.scalar
       value: 75
-      objectReference: {fileID: 0}
-    - target: {fileID: 9206746479762182125, guid: d794be08823edd34da1790efd1739074,
-        type: 3}
-      propertyPath: looping
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9206746479762182125, guid: d794be08823edd34da1790efd1739074,
-        type: 3}
-      propertyPath: ShapeModule.radius.value
-      value: 0.75
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d794be08823edd34da1790efd1739074, type: 3}
