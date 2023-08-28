@@ -64,6 +64,8 @@ public class SC_Gem : MonoBehaviour
     {
         posIndex     = position;
         _scGameLogic = scGameLogic;
+        isMatch      = false;
+        _isSelected  = false;
     }
 
     #endregion

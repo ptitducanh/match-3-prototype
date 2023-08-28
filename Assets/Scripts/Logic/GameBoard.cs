@@ -111,7 +111,7 @@ public class GameBoard
         foreach (var key in _matchedTypeCount.Keys)        
         {
             // if there are more than 3 gems of the same type, we can generate a bomb
-            if (_matchedTypeCount[key] > 2)
+            if (_matchedTypeCount[key] > 3)
             {
                 int randomizedPos = _matchedTypePosition[key][Random.Range(0, _matchedTypePosition[key].Count)];
                 _generatedBombPosition.Add(UnFlattedIndex(randomizedPos));
@@ -266,6 +266,11 @@ public class GameBoard
             }
         }
         
+        if (emptySlotCount == 0)
+        {
+            return _minimalMatchesBoard;
+        }
+        
         // generate all possible gems
         List<int> allPossibleGems = new();
         int[] gemTypes = new int[SC_GameVariables.Instance.gems.Length];
@@ -277,6 +282,7 @@ public class GameBoard
         
         // try to refill the board with all possible gems
         int count = allPossibleGems.Count;
+        count /= emptySlotCount;
         for (int i = 0; i < count; i++)
         {
             int[,] newBoard = new int[_width, _height];
@@ -320,17 +326,22 @@ public class GameBoard
     /// </summary>
     private void GenerateAllPossibleGems(int emptySlotCount, int index, int[] gemTypes, ref List<int> spawnedGems)
     {
-        if (index == emptySlotCount || spawnedGems.Count == emptySlotCount * 1000)
-        {
-            return;
-        }
+        if (index == emptySlotCount) return;
         
         for (int i = 0; i < gemTypes.Length; i++)
         {
-            if (i > 1 && gemTypes[i] == gemTypes[i - 1] && gemTypes[i] == gemTypes[i - 2])
+            if (spawnedGems.Count > 1)
             {
-                continue;
+                if (gemTypes[i] == spawnedGems[spawnedGems.Count - 1] && gemTypes[i] == spawnedGems[spawnedGems.Count - 2])
+                {
+                    if (i < gemTypes.Length - 1)
+                    {
+                        continue;
+                    }
+                }
             }
+            // well we just need to try about 1000 cases
+            if (spawnedGems.Count == emptySlotCount * 1000) return;
             spawnedGems.Add(gemTypes[i]);
             GenerateAllPossibleGems(emptySlotCount, index + 1, gemTypes, ref spawnedGems);
         }

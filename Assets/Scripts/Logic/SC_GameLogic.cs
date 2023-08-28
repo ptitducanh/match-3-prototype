@@ -105,6 +105,7 @@ public class SC_GameLogic : MonoBehaviour
             DestroyMatchedGemsAt(gem.posIndex);
         }
 
+        SpawnBombAfterDestroyMatchedGems();
         StartCoroutine(DecreaseRowCo());
     }
     
@@ -142,7 +143,6 @@ public class SC_GameLogic : MonoBehaviour
             nullCounter = 0;
         }
 
-        Debug.Log($"Delay to refill: {delayToRefill}");
         StartCoroutine(FilledBoardCo(delayToRefill * 2));
     }
 
@@ -154,6 +154,16 @@ public class SC_GameLogic : MonoBehaviour
     {
         SC_GameVariables.Instance.Score += gemToCheck.scoreValue;
         EventHub.Instance.Publish("ScoreChanged");
+    }
+
+    private void SpawnBombAfterDestroyMatchedGems()
+    {
+        var bombPosition = gameBoard.GeneratedBombPosition;
+        foreach (var bomb in bombPosition)
+        {
+            // Spawn a bomb here
+            SpawnGem(new Vector2Int(bomb.x, bomb.y), SC_GameVariables.Instance.bomb, 0f, false);
+        }
     }
     
     private void DestroyMatchedGemsAt(Vector2Int _Pos)
@@ -197,10 +207,8 @@ public class SC_GameLogic : MonoBehaviour
     /// </summary>
     private void RefillBoard()
     {
-        var newBoard     = gameBoard.RefillGameBoard();
-        var bombPosition = gameBoard.GeneratedBombPosition;
-        Debug.Log($"BOMB COUNT : {bombPosition.Count}");
-        var deepestRow   = -1;
+        var newBoard   = gameBoard.RefillGameBoard();
+        var deepestRow = -1;
         for (int x = 0; x < gameBoard.Width; x++)
         {
             for (int y = 0; y < gameBoard.Height; y++)
@@ -212,17 +220,7 @@ public class SC_GameLogic : MonoBehaviour
                     {
                         deepestRow = y;
                     }
-
-                    // Check if we need to spawn a bomb here
-                    if (bombPosition.Any(pos => pos.x == x && pos.y == y))
-                    {
-                        // Spawn a bomb here
-                        SpawnGem(new Vector2Int(x, y), SC_GameVariables.Instance.bomb, (y - deepestRow) * 0.1f, false);
-                    }
-                    else
-                    {
-                        SpawnGem(new Vector2Int(x, y), SC_GameVariables.Instance.gemsDictionary[(GlobalEnums.GemType)newBoard[x, y]], (y - deepestRow) * 0.1f);
-                    }
+                    SpawnGem(new Vector2Int(x, y), SC_GameVariables.Instance.gemsDictionary[(GlobalEnums.GemType)newBoard[x, y]], (y - deepestRow) * 0.1f);
                 }
             }
         }
