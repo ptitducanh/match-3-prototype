@@ -57,7 +57,12 @@ public class SC_GameLogic : MonoBehaviour
             }
     }
     
-    private void SpawnGem(Vector2Int _Position, SC_Gem _GemToSpawn, float delayFallingTime = 0)
+    /// <summary>
+    /// Spawn a gem at the given position
+    /// </summary>
+    /// <param name="delayFallingTime">The delay time before the gem actually drop</param>
+    /// <param name="needToDrop">Does the new gem need to drop or just show up</param>
+    private void SpawnGem(Vector2Int _Position, SC_Gem _GemToSpawn, float delayFallingTime = 0, bool needToDrop = true)
     {
         if (Random.Range(0, 100f) < SC_GameVariables.Instance.bombChance)
             _GemToSpawn = SC_GameVariables.Instance.bomb;
@@ -65,13 +70,13 @@ public class SC_GameLogic : MonoBehaviour
         // Get the gem from the pool. And put it into the gem holder
         SC_Gem _gem = ObjectPool.Instance.Get(_GemToSpawn.name).GetComponent<SC_Gem>();
         var gemTransform = _gem.transform;
-        gemTransform.position = new Vector3(_Position.x, _Position.y + SC_GameVariables.Instance.dropHeight, 0f);
+        gemTransform.position = new Vector3(_Position.x, _Position.y + (needToDrop ? SC_GameVariables.Instance.dropHeight : 0), 0f);
         gemTransform.SetParent(unityObjects["GemsHolder"].transform);
         
         // add the gem into game board logically
         gameBoard.SetGem(_Position.x,_Position.y, _gem);
         _gem.SetupGem(this,_Position);
-        _gem.delayFallingTime = delayFallingTime;
+        _gem.delayFallingTime = needToDrop ? delayFallingTime : 0f;
     }
     public void SetGem(int x,int y, SC_Gem gem)
     {
@@ -192,8 +197,10 @@ public class SC_GameLogic : MonoBehaviour
     /// </summary>
     private void RefillBoard()
     {
-        var newBoard   = gameBoard.RefillGameBoard();
-        var deepestRow = -1;
+        var newBoard     = gameBoard.RefillGameBoard();
+        var bombPosition = gameBoard.GeneratedBombPosition;
+        Debug.Log($"BOMB COUNT : {bombPosition.Count}");
+        var deepestRow   = -1;
         for (int x = 0; x < gameBoard.Width; x++)
         {
             for (int y = 0; y < gameBoard.Height; y++)
@@ -205,7 +212,17 @@ public class SC_GameLogic : MonoBehaviour
                     {
                         deepestRow = y;
                     }
-                    SpawnGem(new Vector2Int(x, y), SC_GameVariables.Instance.gemsDictionary[(GlobalEnums.GemType)newBoard[x, y]], (y - deepestRow) * 0.1f);
+
+                    // Check if we need to spawn a bomb here
+                    if (bombPosition.Any(pos => pos.x == x && pos.y == y))
+                    {
+                        // Spawn a bomb here
+                        SpawnGem(new Vector2Int(x, y), SC_GameVariables.Instance.bomb, (y - deepestRow) * 0.1f, false);
+                    }
+                    else
+                    {
+                        SpawnGem(new Vector2Int(x, y), SC_GameVariables.Instance.gemsDictionary[(GlobalEnums.GemType)newBoard[x, y]], (y - deepestRow) * 0.1f);
+                    }
                 }
             }
         }

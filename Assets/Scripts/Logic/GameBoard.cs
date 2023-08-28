@@ -5,34 +5,45 @@ using UnityEngine;
 
 public class GameBoard
 {
-    #region Variables
+    #region Exposed variables
+    private int _height = 0;
+    public  int Height { get { return _height; } }
 
-    private int height = 0;
-    public int Height { get { return height; } }
-
-    private int width = 0;
-    public int Width { get { return width; } }
-  
-    private SC_Gem[,]       _allGems;
-    private int[,]          _logicalBoard;
+    private int _width = 0;
+    public  int Width { get { return _width; } }
+    
     private HashSet<SC_Gem> _currentMatches = new HashSet<SC_Gem>();
     public  HashSet<SC_Gem> CurrentMatches { get { return _currentMatches; } }
 
-    private int[,] temporaryRefillBoard;
-    private int[,] minimalMatchesBoard;
+    private HashSet<(int x, int y)> _generatedBombPosition = new();
+    public  HashSet<(int x, int y)> GeneratedBombPosition { get { return _generatedBombPosition; } }
+    #endregion
+
+    #region Internal variables
+    private SC_Gem[,] _allGems;
+    private int[,]    _logicalBoard;
+    private int[,]    _temporaryRefillBoard;
+    private int[,]    _minimalMatchesBoard;
     
-    Dictionary<GlobalEnums.GemType, int> _matchedTypeCount = new(); 
+    /// <summary>count the number of matched gems for each type</summary>
+    private Dictionary<GlobalEnums.GemType, int> _matchedTypeCount = new();
+    
+    /// <summary> The list of position for each matched type </summary>
+    private Dictionary<GlobalEnums.GemType, List<int>> _matchedTypePosition = new();
     #endregion
 
     public GameBoard(int width, int height)
     {
-        this.height          = height;
-        this.width           = width;
-        _allGems              = new SC_Gem[this.width, this.height];
-        _logicalBoard         = new int[this.width, this.height];
-        temporaryRefillBoard = new int[this.width, this.height];
-        minimalMatchesBoard  = new int[this.width, this.height];
+        this._height          = height;
+        this._width           = width;
+        _allGems              = new SC_Gem[this._width, this._height];
+        _logicalBoard         = new int[this._width, this._height];
+        _temporaryRefillBoard = new int[this._width, this._height];
+        _minimalMatchesBoard  = new int[this._width, this._height];
     }
+
+    #region public functions
+    /// <summary> Check if there's any match at the given position. </summary>
     public bool MatchesAt(Vector2Int positionToCheck, int gemToCheck)
     {
         if (positionToCheck.x > 1)
@@ -70,9 +81,11 @@ public class GameBoard
     {
         _currentMatches.Clear();
         _matchedTypeCount.Clear();
+        _matchedTypePosition.Clear();
+        _generatedBombPosition.Clear();
 
         // find all the matches from the logical board
-        var             matches        = GetAllMatchesFromThisBoard(_logicalBoard, width, height); 
+        var             matches        = GetAllMatchesFromThisBoard(_logicalBoard, _width, _height); 
         (int x , int y) unflattedIndex = (0, 0);
         SC_Gem currentGem;
         
@@ -86,23 +99,31 @@ public class GameBoard
             if (_matchedTypeCount.ContainsKey(currentGem.type))
             {
                 _matchedTypeCount[currentGem.type]++;
+                _matchedTypePosition[currentGem.type].Add(match);
             }
             else
             {
                 _matchedTypeCount.Add(currentGem.type, 1);
+                _matchedTypePosition.Add(currentGem.type, new List<int>() {match});
+            }
+        }
+
+        foreach (var key in _matchedTypeCount.Keys)        
+        {
+            // if there are more than 3 gems of the same type, we can generate a bomb
+            if (_matchedTypeCount[key] > 2)
+            {
+                int randomizedPos = _matchedTypePosition[key][Random.Range(0, _matchedTypePosition[key].Count)];
+                _generatedBombPosition.Add(UnFlattedIndex(randomizedPos));
             }
         }
 
         CheckForBombs();
     }
+
+    #endregion
     
-    /// <summary>
-    /// This method is used to check if there are any matches on the temporary board. 
-    /// </summary>
-    /// <param name="temporaryBoard"></param>
-    /// <param name="width"></param>
-    /// <param name="height"></param>
-    /// <returns></returns>
+    /// <summary>This method is used to check if there are any matches on the temporary board. </summary>
     private HashSet<int> GetAllMatchesFromThisBoard(int[,] temporaryBoard, int width, int height)
     {
         var result = new HashSet<int>();
@@ -122,14 +143,14 @@ public class GameBoard
     /// Find matches at a specific position on the board
     /// </summary>
     /// <returns></returns>
-    private HashSet<int> FindMatchAt(int[,] temporaryBoard, int x, int y, int width, int height, ref HashSet<int> result)
+    private void FindMatchAt(int[,] temporaryBoard, int x, int y, int width, int height, ref HashSet<int> result)
     {
         if (result == null)
         {
             result = new HashSet<int>();
         }
         
-        if (temporaryBoard[x, y] < 0) return result;
+        if (temporaryBoard[x, y] < 0) return;
         
         // Horizontal gems
         if (x > 0 && x < width - 1)
@@ -137,7 +158,7 @@ public class GameBoard
             int left = temporaryBoard[x - 1, y];
             int right = temporaryBoard[x + 1, y];
             
-            if (left < 0 || right < 0) return result;
+            if (left < 0 || right < 0) return;
             
             if (left == temporaryBoard[x, y] && right == temporaryBoard[x, y])
             {
@@ -153,7 +174,7 @@ public class GameBoard
             int above = temporaryBoard[x, y - 1];
             int below = temporaryBoard[x, y + 1];
             
-            if (above < 0 || below < 0) return result;
+            if (above < 0 || below < 0) return;
             
             if (above == temporaryBoard[x, y] && below == temporaryBoard[x, y])
             {
@@ -162,8 +183,6 @@ public class GameBoard
                 result.Add(FlattedIndex(x, y + 1));
             }
         }
-
-        return result;
     }
 
     private void CheckForBombs()
@@ -180,7 +199,7 @@ public class GameBoard
                     bombAreas.Add((new Vector2Int(x - 1, y), _allGems[x - 1, y].blastSize));
             }
 
-            if (gem.posIndex.x + 1 < width)
+            if (gem.posIndex.x + 1 < _width)
             {
                 if (_allGems[x + 1, y] != null && _allGems[x + 1, y].type == GlobalEnums.GemType.bomb)
                     bombAreas.Add((new Vector2Int(x + 1, y), _allGems[x + 1, y].blastSize));
@@ -192,7 +211,7 @@ public class GameBoard
                     bombAreas.Add((new Vector2Int(x, y - 1), _allGems[x, y - 1].blastSize));
             }
 
-            if (gem.posIndex.y + 1 < height)
+            if (gem.posIndex.y + 1 < _height)
             {
                 if (_allGems[x, y + 1] != null && _allGems[x, y + 1].type == GlobalEnums.GemType.bomb)
                     bombAreas.Add((new Vector2Int(x, y + 1), _allGems[x, y + 1].blastSize));
@@ -211,7 +230,7 @@ public class GameBoard
         {
             for (int y = bombPos.y - blastSize; y <= bombPos.y + blastSize; y++)
             {
-                if (x >= 0 && x < width && y >= 0 && y < height)
+                if (x >= 0 && x < _width && y >= 0 && y < _height)
                 {
                     if (_allGems[x, y] != null)
                     {
@@ -234,12 +253,12 @@ public class GameBoard
         int emptySlotCount             = 0;
         
         // clone the logical board to the temporary board
-        for (int x = 0; x < width; x++)
+        for (int x = 0; x < _width; x++)
         {
-            for (int y = 0; y < height; y++)
+            for (int y = 0; y < _height; y++)
             {
-                temporaryRefillBoard[x, y] = _logicalBoard[x, y];
-                minimalMatchesBoard[x, y]  = _logicalBoard[x, y];
+                _temporaryRefillBoard[x, y] = _logicalBoard[x, y];
+                _minimalMatchesBoard[x, y]  = _logicalBoard[x, y];
                 if (_logicalBoard[x, y] < 0)
                 {
                     emptySlotCount++;
@@ -260,28 +279,28 @@ public class GameBoard
         int count = allPossibleGems.Count;
         for (int i = 0; i < count; i++)
         {
-            int[,] newBoard = new int[width, height];
-            for (int x = 0; x < width; x++)
+            int[,] newBoard = new int[_width, _height];
+            for (int x = 0; x < _width; x++)
             {
-                for (int y = 0; y < height; y++) 
+                for (int y = 0; y < _height; y++) 
                 {
-                    if (temporaryRefillBoard[x, y] < 0)
+                    if (_temporaryRefillBoard[x, y] < 0)
                     {
                         newBoard[x, y] = allPossibleGems[i];
                         i++;
                     }
                     else
                     {
-                        newBoard[x, y] = temporaryRefillBoard[x, y];
+                        newBoard[x, y] = _temporaryRefillBoard[x, y];
                     }
                 }
             }
             
-            var matches = GetAllMatchesFromThisBoard(newBoard, width, height);
+            var matches = GetAllMatchesFromThisBoard(newBoard, _width, _height);
             if (matches.Count == 0)
             {
                 // if we find the perfect board, we can stop the loop
-                minimalMatchesBoard = newBoard;
+                _minimalMatchesBoard = newBoard;
                 break;
             }
             
@@ -289,11 +308,11 @@ public class GameBoard
             {
                 // otherwise we keep the best board
                 minimalMatches      = matches.Count;
-                minimalMatchesBoard = newBoard;
+                _minimalMatchesBoard = newBoard;
             }
         }
         
-        return minimalMatchesBoard;
+        return _minimalMatchesBoard;
     }
 
     /// <summary>
@@ -308,6 +327,10 @@ public class GameBoard
         
         for (int i = 0; i < gemTypes.Length; i++)
         {
+            if (i > 1 && gemTypes[i] == gemTypes[i - 1] && gemTypes[i] == gemTypes[i - 2])
+            {
+                continue;
+            }
             spawnedGems.Add(gemTypes[i]);
             GenerateAllPossibleGems(emptySlotCount, index + 1, gemTypes, ref spawnedGems);
         }
@@ -315,12 +338,12 @@ public class GameBoard
     
     private int FlattedIndex(int x, int y)
     {
-        return x + y * width;
+        return x + y * _width;
     }
     
     private (int x, int y) UnFlattedIndex(int index)
     {
-        return (index % width, index / width);
+        return (index % _width, index / _width);
     }
 }
 
