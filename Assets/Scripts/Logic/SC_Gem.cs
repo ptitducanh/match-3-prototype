@@ -18,7 +18,8 @@ public class SC_Gem : MonoBehaviour
     private SC_Gem  _otherGem;
 
     public  GlobalEnums.GemType type;
-    public  bool                isMatch = false;
+    public  bool                isMatch           = false;
+    public  bool                isDestroyedByBomb = false;
     private Vector2Int          previousPos;
     public  GameObject          destroyEffect;
     public  int                 scoreValue = 10;
@@ -62,10 +63,11 @@ public class SC_Gem : MonoBehaviour
 
     public void SetupGem(SC_GameLogic scGameLogic, Vector2Int position)
     {
-        posIndex     = position;
-        _scGameLogic = scGameLogic;
-        isMatch      = false;
-        _isSelected  = false;
+        posIndex          = position;
+        _scGameLogic      = scGameLogic;
+        isMatch           = false;
+        isDestroyedByBomb = false;
+        _isSelected       = false;
     }
 
     #endregion

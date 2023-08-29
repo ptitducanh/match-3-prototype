@@ -234,8 +234,13 @@ public class GameBoard
                 {
                     if (_allGems[x, y] != null)
                     {
-                        _allGems[x, y].isMatch = true;
-                        _currentMatches.Add(_allGems[x, y]);
+                        if (!_currentMatches.Contains(_allGems[x, y]))
+                        {
+                            _allGems[x, y].isMatch           = true;
+                            _allGems[x, y].isDestroyedByBomb = true;
+                            _currentMatches.Add(_allGems[x, y]);
+                        }
+                        
                     }
                 }
             }

@@ -92,19 +92,43 @@ public class SC_GameLogic : MonoBehaviour
     {
         this.currentState = currentState;
     }
-    
+
     public void DestroyMatches()
     {
+        StartCoroutine(DestroyMatchesCo());
+    }
+    
+    private IEnumerator DestroyMatchesCo()
+    {
         var currentMatches = gameBoard.CurrentMatches;
-
+        var bombDestroyedGems = new List<SC_Gem>();
+        
         foreach (var gem in currentMatches)
         {
             if(gem == null) continue;
+            
+            if (gem.isDestroyedByBomb)
+            {
+                bombDestroyedGems.Add(gem);
+                continue;
+            }
             
             CalculateGameScore(gem);
             DestroyMatchedGemsAt(gem.posIndex);
         }
 
+        if (bombDestroyedGems.Count > 0)
+        {
+            // Wait for 1 second before destroying the gems
+            yield return new WaitForSeconds(1f);
+        
+            foreach (var gem in bombDestroyedGems)
+            {
+                CalculateGameScore(gem);
+                DestroyMatchedGemsAt(gem.posIndex);
+            }
+        }
+        
         SpawnBombAfterDestroyMatchedGems();
         StartCoroutine(DecreaseRowCo());
     }
@@ -159,6 +183,8 @@ public class SC_GameLogic : MonoBehaviour
     private void SpawnBombAfterDestroyMatchedGems()
     {
         var bombPosition = gameBoard.GeneratedBombPosition;
+        if (bombPosition.Count < 1) return;
+        
         foreach (var bomb in bombPosition)
         {
             // Spawn a bomb here
@@ -193,7 +219,7 @@ public class SC_GameLogic : MonoBehaviour
         if (gameBoard.CurrentMatches.Count > 0)
         {
             yield return new WaitForSeconds(0.5f);
-            DestroyMatches();
+            yield return DestroyMatchesCo();
         }
         else
         {
